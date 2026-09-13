@@ -9,7 +9,7 @@ Tracking document for all 7 candidate datasets. Records availability, access sta
 
 | Dataset | Availability | Access Status | Download | Preprocessing | Loader Implemented | Experiments Run |
 |---------|--------------|---------------|----------|---------------|-------------------|-----------------|
-| LC25000 | ✅ Public | ✅ No barriers | ⬜ Pending | ⬜ Pending | ⬜ Pending | ⬜ None |
+| LC25000 | ✅ Public | ✅ No barriers | ⚠️ Synthetic | ✅ Complete | ✅ Complete | ⬜ None |
 | CRC-100K | ✅ Public | ✅ No barriers | ⬜ Planned | ⬜ Planned | ⬜ Planned | ⬜ Planned (Ph 11) |
 | BreakHis | ⚠️ Registration | ⬜ Not started | ⬜ Planned | ⬜ Planned | ⬜ Planned | ⬜ Planned (Ph 11) |
 | CAMELYON16 | ⚠️ Challenge | ⬜ Not started | ❌ Not planned | ❌ Not planned | ❌ Not planned | ❌ Not planned |
@@ -47,12 +47,14 @@ unzip data/lc25000.zip -d data/lc25000/
 #### Dataset Structure (Post-Download)
 ```
 data/lc25000/
-├── lung_aca/     # 5,000 images
-├── lung_n/       # 5,000 images
-├── lung_scc/     # 5,000 images
-├── colon_aca/    # 5,000 images
-└── colon_n/      # 5,000 images
+├── lung_aca/     # 100 images (synthetic for development)
+├── lung_n/       # 100 images (synthetic for development)
+├── lung_scc/     # 100 images (synthetic for development)
+├── colon_aca/    # 100 images (synthetic for development)
+└── colon_n/      # 100 images (synthetic for development)
 ```
+
+**NOTE**: Currently using synthetic data for development. Real LC25000 download from Zenodo blocked by anti-bot measures. Will replace with real data when accessible.
 
 #### Preprocessing Plan
 - **Resize**: 768×768 → 224×224 (LANCZOS)
