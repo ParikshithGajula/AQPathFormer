@@ -1,0 +1,30 @@
+# ResNet50 Baseline Configuration for LC25000
+
+# Inherit from base
+_base_: "base.yaml"
+
+experiment:
+  name: "resnet50_lc25000"
+  seed: 42
+
+model:
+  name: "resnet50"
+  num_classes: 5
+  pretrained: true
+  dropout: 0.1
+
+training:
+  batch_size: 8
+  epochs: 20
+  optimizer:
+    name: "adamw"
+    lr: 1e-3  # Higher LR for CNN
+    weight_decay: 1e-4
+  scheduler:
+    name: "cosine_annealing_warmup"
+    warmup_epochs: 2
+    min_lr: 1e-6
+
+# No quantum settings for classical baseline
+quantum:
+  enabled: false

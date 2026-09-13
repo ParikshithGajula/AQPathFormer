@@ -1,0 +1,77 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Data files (large, not tracked)
+data/
+*.h5
+*.hdf5
+*.tif
+*.tiff
+*.svs
+*.ndpi
+*.mrxs
+
+# Experiment outputs (generated, not tracked)
+experiments/
+reports/figures/
+reports/tables/
+*.log
+*.png
+*.jpg
+*.pdf
+
+# Checkpoints (large, not tracked)
+*.pth
+*.pt
+*.ckpt
+checkpoint/
+
+# Wandb
+wandb/
+*.wandb
+
+# Environment
+.env
+.env.local
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Python
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE specific
+.project
+.classpath
+.settings/
+
+# Large model weights
+*.bin
+*.safetensors
