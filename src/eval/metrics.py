@@ -119,7 +119,10 @@ class MetricsCalculator:
         
         # Classification report
         metrics['classification_report'] = classification_report(
-            y_true, y_pred, target_names=self.class_names, output_dict=True, zero_division=0
+            y_true, y_pred, 
+            target_names=self.class_names, 
+            labels=list(range(self.num_classes)),
+            output_dict=True, zero_division=0
         )
         
         return metrics
