@@ -197,8 +197,8 @@ def create_optimizer(model: nn.Module, config: Dict[str, Any]) -> optim.Optimize
     """Create optimizer from config."""
     opt_config = config.get('training', {}).get('optimizer', {})
     opt_name = opt_config.get('name', 'adamw').lower()
-    lr = opt_config.get('lr', 1e-4)
-    weight_decay = opt_config.get('weight_decay', 1e-4)
+    lr = float(opt_config.get('lr', 1e-4))
+    weight_decay = float(opt_config.get('weight_decay', 1e-4))
     
     if opt_name == 'adamw':
         betas = opt_config.get('betas', [0.9, 0.999])
@@ -206,7 +206,7 @@ def create_optimizer(model: nn.Module, config: Dict[str, Any]) -> optim.Optimize
     elif opt_name == 'adam':
         return optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     elif opt_name == 'sgd':
-        momentum = opt_config.get('momentum', 0.9)
+        momentum = float(opt_config.get('momentum', 0.9))
         return optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=momentum)
     else:
         raise ValueError(f"Unknown optimizer: {opt_name}")
@@ -218,9 +218,9 @@ def create_scheduler(optimizer: optim.Optimizer, config: Dict[str, Any]) -> Opti
     sched_name = sched_config.get('name', 'cosine_annealing_warmup').lower()
     
     if sched_name == 'cosine_annealing_warmup':
-        warmup_epochs = sched_config.get('warmup_epochs', 2)
-        total_epochs = config.get('training', {}).get('epochs', 20)
-        min_lr = sched_config.get('min_lr', 1e-6)
+        warmup_epochs = int(sched_config.get('warmup_epochs', 2))
+        total_epochs = int(config.get('training', {}).get('epochs', 20))
+        min_lr = float(sched_config.get('min_lr', 1e-6))
         
         def lr_lambda(epoch):
             if epoch < warmup_epochs:
@@ -231,13 +231,13 @@ def create_scheduler(optimizer: optim.Optimizer, config: Dict[str, Any]) -> Opti
         return optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
     
     elif sched_name == 'cosine_annealing':
-        total_epochs = config.get('training', {}).get('epochs', 20)
-        min_lr = sched_config.get('min_lr', 1e-6)
+        total_epochs = int(config.get('training', {}).get('epochs', 20))
+        min_lr = float(sched_config.get('min_lr', 1e-6))
         return optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_epochs, eta_min=min_lr)
     
     elif sched_name == 'step':
-        step_size = sched_config.get('step_size', 10)
-        gamma = sched_config.get('gamma', 0.1)
+        step_size = int(sched_config.get('step_size', 10))
+        gamma = float(sched_config.get('gamma', 0.1))
         return optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
     
     elif sched_name == 'reduce_on_plateau':
@@ -412,8 +412,11 @@ def train(
     tracker.log(f"Dataset: {dataset_name}, Train: {len(train_loader.dataset)}, Val: {len(val_loader.dataset)}, Test: {len(test_loader.dataset)}")
     
     # Model
-    model_config = config['model']
+    model_config = config['model'].copy()
     model_name = model_config.get('name', 'resnet50')
+    
+    # Remove num_classes from model_config to avoid duplicate argument
+    model_config.pop('num_classes', None)
     
     if model_name in ['resnet50', 'vit', 'swin', 'convnext', 'efficientnet']:
         model = create_baseline_model(model_name, num_classes=num_classes, **model_config)
