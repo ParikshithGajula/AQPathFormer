@@ -9,9 +9,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Dict, List, Optional, Any, Tuple
-import pennylane as qml
-from pennylane import numpy as pnp
 import numpy as np
+
+# Lazy import for PennyLane
+_qml = None
+_pnp = None
+
+def _get_pennylane():
+    """Lazy import PennyLane."""
+    global _qml, _pnp
+    if _qml is None:
+        import pennylane as qml
+        from pennylane import numpy as pnp
+        _qml = qml
+        _pnp = pnp
+    return _qml, _pnp
 
 
 class NoiseAwareQuantumLayer(nn.Module):

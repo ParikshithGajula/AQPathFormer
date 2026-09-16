@@ -9,9 +9,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional, Dict, Any, List, Tuple, Callable
-import pennylane as qml
-from pennylane import numpy as pnp
 import numpy as np
+
+# Lazy import for PennyLane to avoid DLL loading issues when not using quantum
+_qml = None
+_pnp = None
+
+def _get_pennylane():
+    """Lazy import PennyLane."""
+    global _qml, _pnp
+    if _qml is None:
+        import pennylane as qml
+        from pennylane import numpy as pnp
+        _qml = qml
+        _pnp = pnp
+    return _qml, _pnp
 
 
 class QuantumPatchEncoder(nn.Module):
@@ -77,6 +89,7 @@ class QuantumPatchEncoder(nn.Module):
         
         # Quantum circuit
         if use_quantum:
+            qml, pnp = _get_pennylane()
             self.quantum_device = qml.device('default.qubit', wires=num_qubits, shots=shots)
             self.quantum_circuit = self._create_quantum_circuit()
             self.quantum_layer = qml.qnn.TorchLayer(self.quantum_circuit, weight_shapes=self._get_weight_shapes())
@@ -121,6 +134,8 @@ class QuantumPatchEncoder(nn.Module):
     
     def _create_quantum_circuit(self):
         """Create PennyLane quantum circuit as a QNode."""
+        
+        qml, pnp = _get_pennylane()
         
         # Create device
         dev = qml.device('default.qubit', wires=self.num_qubits, shots=self.shots)
@@ -211,7 +226,7 @@ class QuantumPatchEncoder(nn.Module):
             return {'mode': 'classical_proxy'}
         
         # Get circuit specs
-        import pennylane as qml
+        qml, pnp = _get_pennylane()
         specs = qml.specs(self.quantum_circuit)
         
         return {

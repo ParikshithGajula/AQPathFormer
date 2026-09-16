@@ -11,14 +11,34 @@ from typing import Dict, List, Optional, Any, Tuple, Union
 import yaml
 from pathlib import Path
 
+# Core components that don't require PennyLane
 from src.models.aqpathformer.adaptive_patch_generator import AdaptivePatchGenerator, FixedPatchGenerator, create_patch_generator
-from src.models.aqpathformer.quantum_patch_encoder import QuantumPatchEncoder, ClassicalProxyEncoder, create_quantum_patch_encoder, create_classical_encoder
-from src.models.aqpathformer.adaptive_quantum_attention import AdaptiveQuantumAttention, StandardMultiHeadAttention, create_attention
-from src.models.aqpathformer.multiscale_quantum_fusion import MultiScaleQuantumFusion, SingleScaleQuantumEncoder, create_multiscale_fusion
+from src.models.aqpathformer.quantum_patch_encoder import ClassicalProxyEncoder, create_classical_encoder
+from src.models.aqpathformer.adaptive_quantum_attention import StandardMultiHeadAttention, create_attention
+from src.models.aqpathformer.multiscale_quantum_fusion import SingleScaleQuantumEncoder, create_multiscale_fusion
 from src.models.aqpathformer.cross_cancer_representation import CrossCancerModule, DomainAdaptationModule, create_cross_cancer_module
-from src.models.aqpathformer.noise_aware_quantum_layer import NoiseAwareQuantumLayer, NoiseScheduler, create_noise_aware_layer
-from src.models.aqpathformer.hybrid_decoder import HybridDecoder, HybridDecoderWithQuantum, create_decoder
+from src.models.aqpathformer.hybrid_decoder import HybridDecoder, create_decoder
 from src.models.aqpathformer.multicancer_head import MultiCancerHead, create_head
+
+# Lazy-loaded quantum components
+_quantum_loaded = False
+
+def _load_quantum():
+    global _quantum_loaded
+    if not _quantum_loaded:
+        from src.models.aqpathformer.quantum_patch_encoder import QuantumPatchEncoder, create_quantum_patch_encoder
+        from src.models.aqpathformer.adaptive_quantum_attention import AdaptiveQuantumAttention
+        from src.models.aqpathformer.multiscale_quantum_fusion import MultiScaleQuantumFusion, create_multiscale_fusion
+        from src.models.aqpathformer.hybrid_decoder import HybridDecoderWithQuantum
+        globals().update({
+            'QuantumPatchEncoder': QuantumPatchEncoder,
+            'create_quantum_patch_encoder': create_quantum_patch_encoder,
+            'AdaptiveQuantumAttention': AdaptiveQuantumAttention,
+            'MultiScaleQuantumFusion': MultiScaleQuantumFusion,
+            'create_multiscale_fusion': create_multiscale_fusion,
+            'HybridDecoderWithQuantum': HybridDecoderWithQuantum,
+        })
+        globals()['_quantum_loaded'] = True
 
 
 class AQPathFormer(nn.Module):
@@ -82,12 +102,14 @@ class AQPathFormer(nn.Module):
         
         # 2. Quantum Patch Encoder
         if self.use_quantum_encoder:
+            _load_quantum()
             self.quantum_encoder = create_quantum_patch_encoder(model_config.get('quantum_encoder', {}))
         else:
             self.quantum_encoder = create_classical_encoder(model_config.get('classical_encoder', {}))
         
         # 3. Adaptive Quantum Attention
         if self.use_adaptive_attention:
+            _load_quantum()
             self.attention = create_attention(model_config.get('attention', {}))
             # Link quantum encoder to attention
             if hasattr(self.attention, 'set_quantum_encoder'):
@@ -101,8 +123,10 @@ class AQPathFormer(nn.Module):
         
         # 4. Multi-Scale Quantum Fusion
         if self.use_multiscale:
+            _load_quantum()
             self.multiscale_fusion = create_multiscale_fusion(model_config.get('multiscale_fusion', {}))
         else:
+            _load_quantum()
             self.multiscale_fusion = SingleScaleQuantumEncoder(
                 image_size=self.image_size,
                 patch_size=self.patch_size,
@@ -112,6 +136,7 @@ class AQPathFormer(nn.Module):
         
         # 5. Cross-Cancer Representation
         if self.use_cross_cancer:
+            _load_quantum()
             self.cross_cancer = create_cross_cancer_module(
                 model_config.get('cross_cancer', {}), 
                 self  # Self as shared encoder
@@ -122,12 +147,15 @@ class AQPathFormer(nn.Module):
         # 6. Noise-Aware Layer (integrated into quantum encoder if needed)
         self.noise_aware_layer = None
         if self.use_noise_aware and self.use_quantum_encoder:
+            _load_quantum()
             self.noise_aware_layer = create_noise_aware_layer(
                 self.quantum_encoder, 
                 model_config.get('noise_aware', {})
             )
         
         # 7. Hybrid Decoder
+        if self.use_quantum_encoder or self.use_adaptive_attention or self.use_multiscale:
+            _load_quantum()
         self.decoder = create_decoder(model_config.get('decoder', {}))
         
         # 8. Multi-Cancer Head
@@ -326,8 +354,12 @@ class ReducedAQPathFormer(AQPathFormer):
         super().__init__(config)
 
 
-def create_aqpathformer(config: Dict[str, Any]) -> AQPathFormer:
+def create_aqpathformer(config: Dict[str, Any], num_classes: Optional[int] = None) -> AQPathFormer:
     """Factory to create AQPathFormer from config."""
+    if num_classes is not None:
+        config = config.copy()
+        config['model'] = config.get('model', {}).copy()
+        config['model']['num_classes'] = num_classes
     return AQPathFormer(config)
 
 

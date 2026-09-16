@@ -421,7 +421,8 @@ def train(
     if model_name in ['resnet50', 'vit', 'swin', 'convnext', 'efficientnet']:
         model = create_baseline_model(model_name, num_classes=num_classes, **model_config)
     else:
-        model = create_aqpathformer(**model_config, num_classes=num_classes)
+        # For AQPathFormer, pass the full config (not just model section)
+        model = create_aqpathformer(config, num_classes=num_classes)
     
     model.to(device)
     

@@ -4,6 +4,7 @@ AQPathFormer Models Package
 Quantum-enhanced Vision Transformer components.
 """
 
+# Core components that don't require PennyLane
 from src.models.aqpathformer.adaptive_patch_generator import (
     AdaptivePatchGenerator,
     FixedPatchGenerator,
@@ -11,22 +12,13 @@ from src.models.aqpathformer.adaptive_patch_generator import (
 )
 
 from src.models.aqpathformer.quantum_patch_encoder import (
-    QuantumPatchEncoder,
     ClassicalProxyEncoder,
-    create_quantum_patch_encoder,
     create_classical_encoder,
 )
 
 from src.models.aqpathformer.adaptive_quantum_attention import (
-    AdaptiveQuantumAttention,
     StandardMultiHeadAttention,
     create_attention,
-)
-
-from src.models.aqpathformer.multiscale_quantum_fusion import (
-    MultiScaleQuantumFusion,
-    SingleScaleQuantumEncoder,
-    create_multiscale_fusion,
 )
 
 from src.models.aqpathformer.cross_cancer_representation import (
@@ -35,15 +27,8 @@ from src.models.aqpathformer.cross_cancer_representation import (
     create_cross_cancer_module,
 )
 
-from src.models.aqpathformer.noise_aware_quantum_layer import (
-    NoiseAwareQuantumLayer,
-    NoiseScheduler,
-    create_noise_aware_layer,
-)
-
 from src.models.aqpathformer.hybrid_decoder import (
     HybridDecoder,
-    HybridDecoderWithQuantum,
     create_decoder,
 )
 
@@ -64,42 +49,60 @@ from src.models.aqpathformer.aqpathformer import (
     AQPATHFORMER_CONFIGS,
 )
 
+# Lazy-loaded quantum components (only imported when explicitly requested)
+_quantum_components_loaded = False
+
+def _load_quantum_components():
+    """Lazy load quantum components that require PennyLane."""
+    global _quantum_components_loaded
+    if not _quantum_components_loaded:
+        from src.models.aqpathformer.quantum_patch_encoder import (
+            QuantumPatchEncoder,
+            create_quantum_patch_encoder,
+        )
+        from src.models.aqpathformer.adaptive_quantum_attention import (
+            AdaptiveQuantumAttention,
+        )
+        from src.models.aqpathformer.multiscale_quantum_fusion import (
+            MultiScaleQuantumFusion,
+            SingleScaleQuantumEncoder,
+            create_multiscale_fusion,
+        )
+        from src.models.aqpathformer.hybrid_decoder import (
+            HybridDecoderWithQuantum,
+        )
+        
+        # Add to globals
+        globals().update({
+            'QuantumPatchEncoder': QuantumPatchEncoder,
+            'create_quantum_patch_encoder': create_quantum_patch_encoder,
+            'AdaptiveQuantumAttention': AdaptiveQuantumAttention,
+            'MultiScaleQuantumFusion': MultiScaleQuantumFusion,
+            'SingleScaleQuantumEncoder': SingleScaleQuantumEncoder,
+            'create_multiscale_fusion': create_multiscale_fusion,
+            'HybridDecoderWithQuantum': HybridDecoderWithQuantum,
+        })
+        _quantum_components_loaded = True
+
+# Always available
 __all__ = [
-    # Patch Generator
+    # Core Components
     'AdaptivePatchGenerator',
     'FixedPatchGenerator',
     'create_patch_generator',
-    # Quantum Encoder
-    'QuantumPatchEncoder',
     'ClassicalProxyEncoder',
-    'create_quantum_patch_encoder',
     'create_classical_encoder',
-    # Attention
-    'AdaptiveQuantumAttention',
     'StandardMultiHeadAttention',
     'create_attention',
-    # Multi-Scale Fusion
-    'MultiScaleQuantumFusion',
-    'SingleScaleQuantumEncoder',
-    'create_multiscale_fusion',
-    # Cross-Cancer
     'CrossCancerModule',
     'DomainAdaptationModule',
     'create_cross_cancer_module',
-    # Noise-Aware
-    'NoiseAwareQuantumLayer',
-    'NoiseScheduler',
-    'create_noise_aware_layer',
-    # Decoder
     'HybridDecoder',
-    'HybridDecoderWithQuantum',
     'create_decoder',
-    # Head
     'MultiCancerHead',
     'FocalLoss',
     'EnsembleHead',
     'create_head',
-    # Main Model
     'AQPathFormer',
     'ReducedAQPathFormer',
     'create_aqpathformer',
@@ -107,4 +110,25 @@ __all__ = [
     'load_config',
     'get_model_from_config',
     'AQPATHFORMER_CONFIGS',
+    
+    # Quantum components (lazy-loaded)
+    'QuantumPatchEncoder',
+    'create_quantum_patch_encoder',
+    'AdaptiveQuantumAttention',
+    'MultiScaleQuantumFusion',
+    'SingleScaleQuantumEncoder',
+    'create_multiscale_fusion',
+    'HybridDecoderWithQuantum',
 ]
+
+def __getattr__(name):
+    """Lazy load quantum components on first access."""
+    if name in [
+        'QuantumPatchEncoder', 'create_quantum_patch_encoder',
+        'AdaptiveQuantumAttention', 'MultiScaleQuantumFusion',
+        'SingleScaleQuantumEncoder', 'create_multiscale_fusion',
+        'HybridDecoderWithQuantum',
+    ]:
+        _load_quantum_components()
+        return globals()[name]
+    raise AttributeError(f"module 'src.models.aqpathformer' has no attribute '{name}'")

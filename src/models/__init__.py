@@ -37,10 +37,6 @@ from src.models.aqpathformer import (
     CrossCancerModule,
     DomainAdaptationModule,
     create_cross_cancer_module,
-    # Noise-Aware
-    NoiseAwareQuantumLayer,
-    NoiseScheduler,
-    create_noise_aware_layer,
     # Decoder
     HybridDecoder,
     HybridDecoderWithQuantum,
@@ -87,9 +83,6 @@ __all__ = [
     'CrossCancerModule',
     'DomainAdaptationModule',
     'create_cross_cancer_module',
-    'NoiseAwareQuantumLayer',
-    'NoiseScheduler',
-    'create_noise_aware_layer',
     'HybridDecoder',
     'HybridDecoderWithQuantum',
     'create_decoder',
