@@ -135,11 +135,18 @@ class AQPathFormer(nn.Module):
             )
         
         # 5. Cross-Cancer Representation
-        if self.use_cross_cancer:
+        if self.use_cross_cancer and len(model_config.get('cross_cancer', {}).get('dataset_configs', {})) > 1:
             _load_quantum()
+            # Use the feature extraction parts of this model as shared encoder
+            shared_encoder = nn.Sequential(
+                self.patch_embed,
+                self.pos_embed if hasattr(self, 'pos_embed') else nn.Identity(),
+                self.patch_generator,
+                self.quantum_encoder,
+            )
             self.cross_cancer = create_cross_cancer_module(
                 model_config.get('cross_cancer', {}), 
-                self  # Self as shared encoder
+                shared_encoder
             )
         else:
             self.cross_cancer = None
