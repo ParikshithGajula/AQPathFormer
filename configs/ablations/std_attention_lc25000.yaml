@@ -1,0 +1,63 @@
+# Ablation C: Standard Attention - EXP030
+
+experiment:
+  name: "std_attention_lc25000"
+  seed: 42
+
+dataset:
+  name: "lc25000"
+  root_dir: "data/lc25000"
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  split_strategy: "random"
+  num_workers: 4
+  pin_memory: false
+
+preprocessing:
+  image_size: 224
+  patch_size: 16
+  normalize:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+  augmentation:
+    enabled: true
+    horizontal_flip: 0.5
+    vertical_flip: 0.5
+    rotation: 90
+    color_jitter: 0.1
+    gaussian_blur: 0.1
+
+model:
+  name: "aqpathformer_std_attn"
+  embed_dim: 768
+  num_classes: 5
+  num_heads: 8
+  dropout: 0.1
+  use_adaptive_patches: true
+  use_quantum_encoder: false
+  use_adaptive_attention: false
+  use_multiscale: true
+  patch_generator:
+    type: "adaptive"
+    selection_ratio: 0.25
+  classical_encoder: {'output_dim': 16, 'classical_backbone': 'resnet18'}
+  attention: {'type': 'standard', 'num_heads': 8}
+  multiscale_fusion: {'type': 'multiscale', 'scales': [4, 8, 16], 'use_quantum': false, 'projection_dim': 4}
+  decoder: {'type': 'hybrid', 'num_layers': 4}
+  head: {'dataset_configs': {'lc25000': {'num_classes': 5}}}
+
+training:
+  batch_size: 8
+  epochs: 20
+  optimizer:
+    name: "adamw"
+    lr: 1e-4
+    weight_decay: 1e-4
+  scheduler:
+    name: "cosine_annealing_warmup"
+    warmup_epochs: 2
+    min_lr: 1e-6
+
+quantum:
+  enabled: false

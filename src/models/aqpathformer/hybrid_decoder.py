@@ -90,7 +90,7 @@ class HybridDecoder(nn.Module):
         attentions = [] if return_attention else None
         
         # Cross-attention with quantum features
-        if self.use_cross_attention and quantum_features is not None:
+        if self.use_cross_attention and quantum_features is not None and quantum_features.size(-1) == self.quantum_dim:
             # Project quantum features to embed_dim
             q_proj = self.quantum_proj(quantum_features)  # (batch, embed_dim)
             q_proj = q_proj.unsqueeze(1)  # (batch, 1, embed_dim)
